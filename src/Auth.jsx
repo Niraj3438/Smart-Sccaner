@@ -11,40 +11,54 @@ export default function Auth({onLogin}){
   const [form,setForm]=useState({username:'',password:'',displayName:'',remember:true});
 
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
-  const browserMode=!!supabase && !window.smartscan?.login;
+
+  // Electron exposes native file APIs such as selectFile. The browser
+  // compatibility layer intentionally leaves those APIs unavailable.
+  // Do not use the presence of window.smartscan.login as the detector,
+  // because the browser shim also defines login/logout placeholders.
+  const electronMode=typeof window!=='undefined' && typeof window.smartscan?.selectFile==='function';
+  const browserMode=!electronMode && !!supabase;
 
   const submit=async e=>{
     e.preventDefault(); setError(''); setNotice(''); setBusy(true);
     try{
       if(browserMode){
+        const email=form.username.trim().toLowerCase();
+        if(!email) throw new Error('Please enter your email address.');
         if(mode==='register'){
           const {data,error}=await supabase.auth.signUp({
-            email:form.username.trim(),
+            email,
             password:form.password,
-            options:{data:{display_name:form.displayName||form.username.trim()}}
+            options:{data:{display_name:form.displayName||email}}
           });
           if(error) throw error;
-          if(data.session && data.user) onLogin({id:data.user.id,username:data.user.email,displayName:data.user.user_metadata?.display_name||data.user.email});
-          else setNotice('Account created. Check your email to verify your account, then log in.');
-        } else {
-          const {data,error}=await supabase.auth.signInWithPassword({email:form.username.trim(),password:form.password});
+          if(data.session && data.user){
+            onLogin({id:data.user.id,username:data.user.email,displayName:data.user.user_metadata?.display_name||data.user.email});
+          }else{
+            setNotice('Account created. Check your email to verify your account, then log in.');
+          }
+        }else{
+          const {data,error}=await supabase.auth.signInWithPassword({email,password:form.password});
           if(error) throw error;
           if(!data.user) throw new Error('Login failed.');
           onLogin({id:data.user.id,username:data.user.email,displayName:data.user.user_metadata?.display_name||data.user.email});
         }
-      } else {
+      }else{
+        if(!window.smartscan) throw new Error('SmartScan desktop bridge is unavailable.');
         if(mode==='register'){
           const r=await window.smartscan.register(form);
           if(!r.ok) throw new Error(r.error||'Could not create account.');
           onLogin(r.user);
-        } else if(mode==='login'){
+        }else{
           const r=await window.smartscan.login(form);
           if(!r.ok) throw new Error(r.error||'Login failed.');
           onLogin(r.user);
         }
       }
-    }catch(err){ setError(err?.message||'Something went wrong.'); }
-    finally{ setBusy(false); }
+    }catch(err){
+      console.error('SmartScan authentication error:',err);
+      setError(err?.message||'Something went wrong.');
+    }finally{ setBusy(false); }
   };
 
   const doImport=async()=>{
@@ -54,7 +68,7 @@ export default function Auth({onLogin}){
       if(r===undefined) return;
       if(!r.ok){ if(r.error) setError(r.error); return; }
       onLogin(r.user);
-    } finally { setBusy(false); }
+    }finally{ setBusy(false); }
   };
 
   return <div className="auth-screen">
