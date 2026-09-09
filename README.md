@@ -1,3 +1,4 @@
+
 # SmartScan X Pro
 
 A local-first desktop file-relationship scanner with an **offline multi-user login system**, animated UI, and a bonus Game Center. Everything — scanning, matching, accounts, and data — runs and stays on the user's own PC. No internet connection or backend server is required at any point, before or after publishing.
@@ -85,3 +86,6 @@ SmartScan X Pro/
 This build is connected to the SmartScan Supabase project. Each local SmartScan account syncs its app data (history, favorites, projects, settings and profile) to `public.smartscan_data` using the account ID as the row key. Local storage remains the primary fallback, so the app continues to work when offline.
 
 The app uses the Supabase publishable key only; no service-role/secret key is embedded. The database already uses `x-client-id` RLS policies for the `smartscan_data` table.
+=======
+# Smart-Sccaner
+>>>>>>> c7588b1b920a4e81983c84562644fe0f33717e62
