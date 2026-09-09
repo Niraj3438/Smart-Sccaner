@@ -9,13 +9,9 @@ export default function Auth({onLogin}){
   const [notice,setNotice]=useState('');
   const [showPw,setShowPw]=useState(false);
   const [form,setForm]=useState({username:'',password:'',displayName:'',remember:true});
-
   const set=(k,v)=>setForm(f=>({...f,[k]:v}));
 
-  // Electron exposes native file APIs such as selectFile. The browser
-  // compatibility layer intentionally leaves those APIs unavailable.
-  // Every non-Electron browser must use Supabase authentication. This avoids
-  // falling through to the desktop placeholder and hiding the real error.
+  // Browser always uses Supabase; Electron uses the native desktop bridge.
   const electronMode=typeof window!=='undefined' && typeof window.smartscan?.selectFile==='function';
   const browserMode=!electronMode;
 
@@ -27,17 +23,10 @@ export default function Auth({onLogin}){
         const email=form.username.trim().toLowerCase();
         if(!email) throw new Error('Please enter your email address.');
         if(mode==='register'){
-          const {data,error}=await supabase.auth.signUp({
-            email,
-            password:form.password,
-            options:{data:{display_name:form.displayName||email}}
-          });
+          const {data,error}=await supabase.auth.signUp({email,password:form.password,options:{data:{display_name:form.displayName||email}}});
           if(error) throw error;
-          if(data.session && data.user){
-            onLogin({id:data.user.id,username:data.user.email,displayName:data.user.user_metadata?.display_name||data.user.email});
-          }else{
-            setNotice('Account created. Check your email to verify your account, then log in.');
-          }
+          if(data.session&&data.user) onLogin({id:data.user.id,username:data.user.email,displayName:data.user.user_metadata?.display_name||data.user.email});
+          else setNotice('Account created. Check your email to verify your account, then log in.');
         }else{
           const {data,error}=await supabase.auth.signInWithPassword({email,password:form.password});
           if(error) throw error;
@@ -59,7 +48,7 @@ export default function Auth({onLogin}){
     }catch(err){
       console.error('SmartScan authentication error:',err);
       setError(err?.message||'Something went wrong.');
-    }finally{ setBusy(false); }
+    }finally{setBusy(false);}
   };
 
   const doImport=async()=>{
@@ -67,9 +56,9 @@ export default function Auth({onLogin}){
     try{
       const r=await window.smartscan?.importAccount?.();
       if(r===undefined) return;
-      if(!r.ok){ if(r.error) setError(r.error); return; }
+      if(!r.ok){if(r.error)setError(r.error);return;}
       onLogin(r.user);
-    }finally{ setBusy(false); }
+    }finally{setBusy(false);}
   };
 
   return <div className="auth-screen">
