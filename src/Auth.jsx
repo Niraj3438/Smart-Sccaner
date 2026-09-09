@@ -14,15 +14,16 @@ export default function Auth({onLogin}){
 
   // Electron exposes native file APIs such as selectFile. The browser
   // compatibility layer intentionally leaves those APIs unavailable.
-  // Do not use the presence of window.smartscan.login as the detector,
-  // because the browser shim also defines login/logout placeholders.
+  // Every non-Electron browser must use Supabase authentication. This avoids
+  // falling through to the desktop placeholder and hiding the real error.
   const electronMode=typeof window!=='undefined' && typeof window.smartscan?.selectFile==='function';
-  const browserMode=!electronMode && !!supabase;
+  const browserMode=!electronMode;
 
   const submit=async e=>{
     e.preventDefault(); setError(''); setNotice(''); setBusy(true);
     try{
       if(browserMode){
+        if(!supabase) throw new Error('Supabase is not configured in this web deployment. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in Vercel, enable them for Production, then redeploy.');
         const email=form.username.trim().toLowerCase();
         if(!email) throw new Error('Please enter your email address.');
         if(mode==='register'){
