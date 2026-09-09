@@ -1,1 +1,31 @@
-<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>SmartScan X</title><meta name="theme-color" content="#0b1224"/><link rel="icon" href="/assets/smartscan-x.svg" type="image/svg+xml"/></head><body><div id="root"></div>   <script type="module" src="/src/main.jsx"></script></script></body></html>
+<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>SmartScan X</title><meta name="theme-color" content="#0b1224"/><link rel="icon" href="/assets/smartscan-x.svg" type="image/svg+xml"/></head><body><div id="root"></div><script>
+/* Browser compatibility layer. Electron supplies window.smartscan through preload; Vercel/Chrome does not. */
+(function(){
+  if(window.smartscan) return;
+  const storageKey='smartscan-browser-data';
+  const load=()=>{try{return JSON.parse(localStorage.getItem(storageKey)||'{}')}catch{return {}}};
+  const save=data=>{try{localStorage.setItem(storageKey,JSON.stringify(data||{}));return true}catch{return false}};
+  window.smartscan={
+    loadData:async()=>load(),
+    saveData:async(data)=>save(data),
+    selectFile:null,
+    selectFolder:null,
+    fileInfo:async()=>null,
+    openPath:async()=>false,
+    showFolder:async()=>false,
+    renameFile:async()=>false,
+    exportReport:async()=>false,
+    installApp:async()=>false,
+    recoveryScan:async()=>[],
+    getDroppedPath:()=>'',
+    register:async()=>({ok:false}),
+    login:async()=>({ok:false}),
+    logout:async()=>({ok:true}),
+    resetPassword:async()=>({ok:false}),
+    getSession:async()=>null,
+    exportAccount:async()=>false,
+    importAccount:async()=>false,
+    scan:async()=>{throw new Error('Full computer scanning is available in the SmartScan X Pro desktop app. Chrome cannot access your entire Windows file system.')}
+  };
+})();
+</script><script type="module" src="/src/main.jsx"></script></body></html>
