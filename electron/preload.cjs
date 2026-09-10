@@ -1,4 +1,42 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
+const fs = require('fs');
+
+function getWindowsDrives() {
+  if (process.platform !== 'win32') return [];
+
+  const drives = [];
+  for (let code = 65; code <= 90; code++) {
+    const root = `${String.fromCharCode(code)}:\\`;
+    try {
+      if (fs.existsSync(root)) drives.push(root);
+    } catch {}
+  }
+  return drives;
+}
+
+function buildScanPayload(payload = {}) {
+  const requested = Array.isArray(payload.locations)
+    ? payload.locations.filter(Boolean)
+    : [];
+
+  // SmartScan's desktop mode is intentionally a one-file-to-system scan:
+  // the user should not have to select a second folder. If no explicit
+  // locations were supplied, search every mounted Windows drive.
+  if (!requested.length && process.platform === 'win32') {
+    const drives = getWindowsDrives();
+    return {
+      ...payload,
+      locations: drives,
+      autoSystemScan: true
+    };
+  }
+
+  return {
+    ...payload,
+    locations: [...new Set(requested)],
+    autoSystemScan: false
+  };
+}
 
 contextBridge.exposeInMainWorld('smartscan', {
   // =========================
@@ -11,8 +49,8 @@ contextBridge.exposeInMainWorld('smartscan', {
   selectFolder: () =>
     ipcRenderer.invoke('select-folder'),
 
-  scan: (payload) =>
-    ipcRenderer.invoke('scan', payload),
+  scan: (payload = {}) =>
+    ipcRenderer.invoke('scan', buildScanPayload(payload)),
 
   fileInfo: (filePath) =>
     ipcRenderer.invoke('file-info', filePath),
