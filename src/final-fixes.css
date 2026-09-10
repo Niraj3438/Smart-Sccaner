@@ -1,0 +1,66 @@
+/* =========================================================
+   SMARTSCAN X — FINAL UI FIXES
+   ========================================================= */
+
+/* Profile accent swatches must always be clickable. */
+.profile-accent-row,
+.profile-accent-row button {
+  pointer-events: auto !important;
+}
+
+.profile-accent-row button {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  cursor: pointer !important;
+  position: relative !important;
+  z-index: 5 !important;
+  transition: transform .16s ease, box-shadow .16s ease, outline .16s ease !important;
+}
+
+.profile-accent-row button:hover {
+  transform: scale(1.14) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--user-accent, #7659ff), transparent 70%), 0 5px 14px rgba(0,0,0,.28) !important;
+}
+
+.profile-accent-row button.swatch-sel {
+  outline: 2px solid #fff !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--user-accent, #7659ff), transparent 65%) !important;
+}
+
+/* The End Game control should never look like a danger/delete button.
+   It remains visible and usable, but uses the selected accent/neutral UI. */
+.game-end-btn,
+.gameover-end-btn {
+  background: color-mix(in srgb, var(--user-accent, #7659ff), #070b16 72%) !important;
+  border: 1px solid color-mix(in srgb, var(--user-accent, #7659ff), #ffffff 18%) !important;
+  color: #eef2ff !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.28) !important;
+}
+
+.game-end-btn:hover,
+.gameover-end-btn:hover {
+  background: var(--user-accent, #7659ff) !important;
+  border-color: var(--user-accent, #7659ff) !important;
+  color: #fff !important;
+  transform: translateY(-1px) !important;
+}
+
+/* In real fullscreen, keep the control compact and out of the way. */
+.games-page.real-game-fullscreen .game-end-btn {
+  position: fixed !important;
+  top: 12px !important;
+  right: 130px !important;
+  z-index: 2147483646 !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+}
+
+@media (max-width: 720px) {
+  .games-page.real-game-fullscreen .game-end-btn {
+    top: 8px !important;
+    right: 76px !important;
+    padding: 7px 9px !important;
+    font-size: 11px !important;
+  }
+}
