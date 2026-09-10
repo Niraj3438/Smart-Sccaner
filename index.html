@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>SmartScan X</title><meta name="theme-color" content="#0b1224"/><link rel="icon" href="/assets/smartscan-x.svg" type="image/svg+xml"/></head><body><div id="root"></div><script>
+<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>SmartScan X</title><meta name="theme-color" content="#0b1224"/><link rel="icon" href="/assets/smartscan-x.svg" type="image/svg+xml"/><link rel="stylesheet" href="/src/final-fixes.css"/></head><body><div id="root"></div><script>
 /* Browser compatibility layer. Electron supplies window.smartscan through preload; Vercel/Chrome does not. */
 (function(){
   if(window.smartscan) return;
@@ -29,17 +29,18 @@
   };
 })();
 
-/* =========================================================
-   PROFILE ACCENT FIX
-   The profile swatches previously rendered without an onClick
-   handler. This delegated handler makes them immediately update
-   the live theme and persist the selected accent in both Electron
-   and browser builds.
-   ========================================================= */
+/* PROFILE ACCENT FIX
+   The profile swatches are rendered by React without their own
+   onClick handler. Keep this delegated handler as a compatibility
+   layer and reload after persistence so React applies the selected
+   color from saved settings instead of immediately overwriting it. */
 (function(){
   const valid=['#7659ff','#00b8d9','#19b878','#ff7a45','#f03e8c','#f2b84b'];
-  const apply=(color)=>{
-    if(!valid.includes(String(color).toLowerCase())) return;
+  let busy=false;
+  const apply=async(color)=>{
+    color=String(color||'').toLowerCase();
+    if(!valid.includes(color)||busy) return;
+    busy=true;
     const root=document.documentElement;
     root.style.setProperty('--accent',color,'important');
     root.style.setProperty('--user-accent',color,'important');
@@ -49,27 +50,30 @@
     root.style.setProperty('--accent-glow',color+'55','important');
     root.style.setProperty('accent-color',color,'important');
     try{
-      const raw=localStorage.getItem('smartscan-browser-data');
-      if(raw){
-        const data=JSON.parse(raw)||{};
-        data.settings={...(data.settings||{}),accent:color};
-        localStorage.setItem('smartscan-browser-data',JSON.stringify(data));
+      const data=load()||{};
+      data.settings={...(data.settings||{}),accent:color};
+      save(data);
+    }catch{}
+    try{
+      if(window.smartscan?.loadData&&window.smartscan?.saveData){
+        const data=await window.smartscan.loadData();
+        const next={...(data||{}),settings:{...((data||{}).settings||{}),accent:color}};
+        await window.smartscan.saveData(next);
       }
     }catch{}
-    if(window.smartscan?.loadData && window.smartscan?.saveData){
-      window.smartscan.loadData().then(data=>{
-        const next={...(data||{}),settings:{...((data||{}).settings||{}),accent:color}};
-        return window.smartscan.saveData(next);
-      }).catch(()=>{});
-    }
+    document.querySelectorAll('.profile-accent-row button').forEach(b=>b.classList.remove('swatch-sel'));
+    const active=[...document.querySelectorAll('.profile-accent-row button')].find(b=>String(b.style.backgroundColor||'').toLowerCase()===color);
+    active?.classList.add('swatch-sel');
+    /* React's settings state is the source of truth; reload after save. */
+    setTimeout(()=>location.reload(),120);
   };
   document.addEventListener('click',(event)=>{
     const button=event.target.closest('.profile-accent-row button');
     if(!button) return;
-    const color=button.style.backgroundColor || button.getAttribute('data-accent');
+    event.preventDefault();
+    event.stopPropagation();
+    const color=button.style.backgroundColor||button.getAttribute('data-accent');
     if(color) apply(color);
-    document.querySelectorAll('.profile-accent-row button').forEach(b=>b.classList.remove('swatch-sel'));
-    button.classList.add('swatch-sel');
   },true);
 })();
 </script><script type="module" src="/src/main.jsx"></script></body></html>
