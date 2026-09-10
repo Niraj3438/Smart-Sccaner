@@ -28,4 +28,48 @@
     scan:async()=>{throw new Error('Full computer scanning is available in the SmartScan X Pro desktop app. Chrome cannot access your entire Windows file system.')}
   };
 })();
+
+/* =========================================================
+   PROFILE ACCENT FIX
+   The profile swatches previously rendered without an onClick
+   handler. This delegated handler makes them immediately update
+   the live theme and persist the selected accent in both Electron
+   and browser builds.
+   ========================================================= */
+(function(){
+  const valid=['#7659ff','#00b8d9','#19b878','#ff7a45','#f03e8c','#f2b84b'];
+  const apply=(color)=>{
+    if(!valid.includes(String(color).toLowerCase())) return;
+    const root=document.documentElement;
+    root.style.setProperty('--accent',color,'important');
+    root.style.setProperty('--user-accent',color,'important');
+    root.style.setProperty('--accent-soft',color+'33','important');
+    root.style.setProperty('--accent-faint',color+'18','important');
+    root.style.setProperty('--accent-border',color+'66','important');
+    root.style.setProperty('--accent-glow',color+'55','important');
+    root.style.setProperty('accent-color',color,'important');
+    try{
+      const raw=localStorage.getItem('smartscan-browser-data');
+      if(raw){
+        const data=JSON.parse(raw)||{};
+        data.settings={...(data.settings||{}),accent:color};
+        localStorage.setItem('smartscan-browser-data',JSON.stringify(data));
+      }
+    }catch{}
+    if(window.smartscan?.loadData && window.smartscan?.saveData){
+      window.smartscan.loadData().then(data=>{
+        const next={...(data||{}),settings:{...((data||{}).settings||{}),accent:color}};
+        return window.smartscan.saveData(next);
+      }).catch(()=>{});
+    }
+  };
+  document.addEventListener('click',(event)=>{
+    const button=event.target.closest('.profile-accent-row button');
+    if(!button) return;
+    const color=button.style.backgroundColor || button.getAttribute('data-accent');
+    if(color) apply(color);
+    document.querySelectorAll('.profile-accent-row button').forEach(b=>b.classList.remove('swatch-sel'));
+    button.classList.add('swatch-sel');
+  },true);
+})();
 </script><script type="module" src="/src/main.jsx"></script></body></html>
