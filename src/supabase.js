@@ -1,7 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// The web build must also work when Vercel environment variables were not
+// injected at build time. The publishable key is specifically intended for
+// browser/client applications; never use a secret/service-role key here.
+const DEFAULT_SUPABASE_URL = 'https://sdvwtpltzpjcvocbnybw.supabase.co';
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_r_3tdQCVxo1SWdHn32PNvQ_5FaKfIaP';
+
+const url = import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
 
 export const supabase = url && key
   ? createClient(url, key, {
