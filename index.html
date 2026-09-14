@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#0b1224"/><meta name="mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><meta name="apple-mobile-web-app-title" content="SmartScan X Pro"/><link rel="manifest" href="/manifest.webmanifest"/><title>SmartScan X Pro</title><link rel="icon" href="/assets/smartscan-x.svg" type="image/svg+xml"/><link rel="stylesheet" href="/src/final-fixes.css"/></head><body><div id="root"></div><script>
+<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#0b1224"/><meta name="mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><meta name="apple-mobile-web-app-title" content="SmartScan X Pro"/><link rel="manifest" href="/manifest.webmanifest"/><title>SmartScan X Pro</title><link rel="icon" href="/assets/smartscan-x.svg" type="image/svg+xml"/><link rel="stylesheet" href="/src/final-fixes.css"/><link rel="stylesheet" href="/src/mobile-modern.css"/></head><body><div id="root"></div><script>
 (function(){
   if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}
   if(window.smartscan) return;
@@ -8,4 +8,19 @@
   window.smartscan={loadData:async()=>load(),saveData:async(data)=>save(data),selectFile:null,selectFolder:null,fileInfo:async()=>null,openPath:async()=>false,showFolder:async()=>false,renameFile:async()=>false,exportReport:async()=>false,installApp:async()=>false,recoveryScan:async()=>[],getDroppedPath:()=>'',register:async()=>({ok:false}),login:async()=>({ok:false}),logout:async()=>({ok:true}),resetPassword:async()=>({ok:false}),getSession:async()=>null,exportAccount:async()=>false,importAccount:async()=>false,scan:async()=>{throw new Error('Full computer scanning is available in the SmartScan X Pro desktop app. Chrome cannot access your entire Windows file system.')}};
 })();
 (function(){const valid=['#7659ff','#00b8d9','#19b878','#ff7a45','#f03e8c','#f2b84b'];let busy=false;const apply=async(color)=>{color=String(color||'').toLowerCase();if(!valid.includes(color)||busy)return;busy=true;const root=document.documentElement;root.style.setProperty('--accent',color,'important');root.style.setProperty('--user-accent',color,'important');try{const data=JSON.parse(localStorage.getItem('smartscan-browser-data')||'{}');data.settings={...(data.settings||{}),accent:color};localStorage.setItem('smartscan-browser-data',JSON.stringify(data))}catch{};try{const data=await window.smartscan.loadData();await window.smartscan.saveData({...data,settings:{...(data.settings||{}),accent:color}})}catch{};setTimeout(()=>location.reload(),120)};document.addEventListener('click',event=>{const button=event.target.closest('.profile-accent-row button');if(!button)return;event.preventDefault();event.stopPropagation();apply(button.style.backgroundColor||button.getAttribute('data-accent'))},true)})();
+(function(){
+  const mount=()=>{
+    if(document.querySelector('.mobile-shell-bar')) return;
+    const bar=document.createElement('div');bar.className='mobile-shell-bar';
+    bar.innerHTML='<div class="mobile-brand"><div class="mobile-brand-logo">S</div><div><div class="mobile-brand-title">SmartScan <span>X Pro</span></div><small class="mobile-brand-sub">FILE RELATIONSHIP ORGANIZER</small></div></div><div class="mobile-shell-actions"><a href="#" class="mobile-home-btn" aria-label="Home">⌂</a><button type="button" class="mobile-menu-label" aria-label="Open side menu" title="Menu">⋮</button></div>';
+    document.body.appendChild(bar);
+    const scrim=document.createElement('div');scrim.className='mobile-sidebar-scrim';document.body.appendChild(scrim);
+    const toggle=()=>{const side=document.querySelector('.smart-sidebar');if(side)side.classList.toggle('mobile-open')};
+    bar.querySelector('.mobile-menu-label').addEventListener('click',toggle);
+    scrim.addEventListener('click',()=>document.querySelector('.smart-sidebar')?.classList.remove('mobile-open'));
+    bar.querySelector('.mobile-home-btn').addEventListener('click',e=>{e.preventDefault();const b=[...document.querySelectorAll('.smart-sidebar nav button')].find(x=>x.textContent.trim().toLowerCase()==='home');if(b)b.click();document.querySelector('.smart-sidebar')?.classList.remove('mobile-open')});
+  };
+  new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount);else mount();
+})();
 </script><script type="module" src="/src/main.jsx"></script></body></html>
