@@ -1,79 +1,11 @@
-<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><title>SmartScan X</title><meta name="theme-color" content="#0b1224"/><link rel="icon" href="/assets/smartscan-x.svg" type="image/svg+xml"/><link rel="stylesheet" href="/src/final-fixes.css"/></head><body><div id="root"></div><script>
-/* Browser compatibility layer. Electron supplies window.smartscan through preload; Vercel/Chrome does not. */
+<!doctype html><html><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="theme-color" content="#0b1224"/><meta name="mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><meta name="apple-mobile-web-app-title" content="SmartScan X Pro"/><link rel="manifest" href="/manifest.webmanifest"/><title>SmartScan X Pro</title><link rel="icon" href="/assets/smartscan-x.svg" type="image/svg+xml"/><link rel="stylesheet" href="/src/final-fixes.css"/></head><body><div id="root"></div><script>
 (function(){
+  if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}
   if(window.smartscan) return;
   const storageKey='smartscan-browser-data';
   const load=()=>{try{return JSON.parse(localStorage.getItem(storageKey)||'{}')}catch{return {}}};
   const save=data=>{try{localStorage.setItem(storageKey,JSON.stringify(data||{}));return true}catch{return false}};
-  window.smartscan={
-    loadData:async()=>load(),
-    saveData:async(data)=>save(data),
-    selectFile:null,
-    selectFolder:null,
-    fileInfo:async()=>null,
-    openPath:async()=>false,
-    showFolder:async()=>false,
-    renameFile:async()=>false,
-    exportReport:async()=>false,
-    installApp:async()=>false,
-    recoveryScan:async()=>[],
-    getDroppedPath:()=>'',
-    register:async()=>({ok:false}),
-    login:async()=>({ok:false}),
-    logout:async()=>({ok:true}),
-    resetPassword:async()=>({ok:false}),
-    getSession:async()=>null,
-    exportAccount:async()=>false,
-    importAccount:async()=>false,
-    scan:async()=>{throw new Error('Full computer scanning is available in the SmartScan X Pro desktop app. Chrome cannot access your entire Windows file system.')}
-  };
+  window.smartscan={loadData:async()=>load(),saveData:async(data)=>save(data),selectFile:null,selectFolder:null,fileInfo:async()=>null,openPath:async()=>false,showFolder:async()=>false,renameFile:async()=>false,exportReport:async()=>false,installApp:async()=>false,recoveryScan:async()=>[],getDroppedPath:()=>'',register:async()=>({ok:false}),login:async()=>({ok:false}),logout:async()=>({ok:true}),resetPassword:async()=>({ok:false}),getSession:async()=>null,exportAccount:async()=>false,importAccount:async()=>false,scan:async()=>{throw new Error('Full computer scanning is available in the SmartScan X Pro desktop app. Chrome cannot access your entire Windows file system.')}};
 })();
-
-/* PROFILE ACCENT FIX
-   The profile swatches are rendered by React without their own
-   onClick handler. Keep this delegated handler as a compatibility
-   layer and reload after persistence so React applies the selected
-   color from saved settings instead of immediately overwriting it. */
-(function(){
-  const valid=['#7659ff','#00b8d9','#19b878','#ff7a45','#f03e8c','#f2b84b'];
-  let busy=false;
-  const apply=async(color)=>{
-    color=String(color||'').toLowerCase();
-    if(!valid.includes(color)||busy) return;
-    busy=true;
-    const root=document.documentElement;
-    root.style.setProperty('--accent',color,'important');
-    root.style.setProperty('--user-accent',color,'important');
-    root.style.setProperty('--accent-soft',color+'33','important');
-    root.style.setProperty('--accent-faint',color+'18','important');
-    root.style.setProperty('--accent-border',color+'66','important');
-    root.style.setProperty('--accent-glow',color+'55','important');
-    root.style.setProperty('accent-color',color,'important');
-    try{
-      const data=load()||{};
-      data.settings={...(data.settings||{}),accent:color};
-      save(data);
-    }catch{}
-    try{
-      if(window.smartscan?.loadData&&window.smartscan?.saveData){
-        const data=await window.smartscan.loadData();
-        const next={...(data||{}),settings:{...((data||{}).settings||{}),accent:color}};
-        await window.smartscan.saveData(next);
-      }
-    }catch{}
-    document.querySelectorAll('.profile-accent-row button').forEach(b=>b.classList.remove('swatch-sel'));
-    const active=[...document.querySelectorAll('.profile-accent-row button')].find(b=>String(b.style.backgroundColor||'').toLowerCase()===color);
-    active?.classList.add('swatch-sel');
-    /* React's settings state is the source of truth; reload after save. */
-    setTimeout(()=>location.reload(),120);
-  };
-  document.addEventListener('click',(event)=>{
-    const button=event.target.closest('.profile-accent-row button');
-    if(!button) return;
-    event.preventDefault();
-    event.stopPropagation();
-    const color=button.style.backgroundColor||button.getAttribute('data-accent');
-    if(color) apply(color);
-  },true);
-})();
+(function(){const valid=['#7659ff','#00b8d9','#19b878','#ff7a45','#f03e8c','#f2b84b'];let busy=false;const apply=async(color)=>{color=String(color||'').toLowerCase();if(!valid.includes(color)||busy)return;busy=true;const root=document.documentElement;root.style.setProperty('--accent',color,'important');root.style.setProperty('--user-accent',color,'important');try{const data=JSON.parse(localStorage.getItem('smartscan-browser-data')||'{}');data.settings={...(data.settings||{}),accent:color};localStorage.setItem('smartscan-browser-data',JSON.stringify(data))}catch{};try{const data=await window.smartscan.loadData();await window.smartscan.saveData({...data,settings:{...(data.settings||{}),accent:color}})}catch{};setTimeout(()=>location.reload(),120)};document.addEventListener('click',event=>{const button=event.target.closest('.profile-accent-row button');if(!button)return;event.preventDefault();event.stopPropagation();apply(button.style.backgroundColor||button.getAttribute('data-accent'))},true)})();
 </script><script type="module" src="/src/main.jsx"></script></body></html>
